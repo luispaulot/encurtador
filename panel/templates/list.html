@@ -1,0 +1,95 @@
+{% extends "panel/base.html" %}
+{% block page_title %}
+	
+{% endblock page_title %}
+
+{% block page_content %}
+	<div class="row" id="list-page">
+		<div class="col-12">
+			<table class="table">
+			  <thead>
+			    <tr>
+			      <th scope="col">URL Completa</th>
+			      <th scope="col">URL Curta</th>
+			      <th scope="col">Data Expiração</th>
+			    </tr>
+			  </thead>
+			  <tbody>
+			    <tr v-for="item in urls">
+			      <td>[[ item.url_full ]]</td>
+			      <td>[[ item.url_hash ]]</td>
+			      <td>[[ item.expired_at ]]</td>
+			    </tr>
+			  </tbody>
+			</table>
+		</div>
+		<div class="row text-center">
+			<div class="col-12">
+			  	<button type="button" class="btn btn-primary btn-sm" v-on:click="call_url('prev')" :disabled="!previous">Anterior</button>
+				<button type="button" class="btn btn-secondary btn-sm" v-on:click="call_url('next')" :disabled="!next">Próxima</button>
+			</div>
+		</div>
+	</div>
+	
+{% endblock page_content %}
+
+{% block scripts %}
+	<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			var app = new Vue({
+				delimiters: ['[[', ']]'],
+				el: '#list-page',
+				data: {
+					urls: [],
+					next: null,
+					previous: null
+				},
+				methods: {
+					init: function() {
+						$.ajax({
+							"url": "http://localhost:8000/api/",
+							"method": "GET",
+							"contentType": "application/json",
+							success: function(data){
+								_urls.urls = data.results;
+								_urls.next = data.next;
+								_urls.previous = data.previous;
+							},
+							error: function(error) {
+								console.log(error);
+							}
+						});
+					},
+					call_url: function(operation) {
+						var url = "";
+						if ("prev" === operation) {
+							url = _urls.previous;
+						} else if ("next" === operation) {
+							url = _urls.next;
+						} else {
+							console.error("Deu ruim ali");
+						}
+						$.ajax({
+							"url": url,
+							"method": "GET",
+							"contentType": "application/json",
+							success: function(data){
+								_urls.urls = data.results;
+								_urls.next = data.next;
+								_urls.previous = data.previous;
+							},
+							error: function(error) {
+								console.log(error);
+							}
+						});
+					}
+				},
+				mounted: function(){
+					_urls = this;
+					_urls.init();
+				}
+			});
+		});
+	</script>
+{% endblock scripts %}
